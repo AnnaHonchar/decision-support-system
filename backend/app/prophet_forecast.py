@@ -5,29 +5,29 @@ from datetime import timedelta
 def generate_forecast(df):
     result = []
 
-    # ✅ Нормалізація колонок
+    #Нормалізація колонок
     df.columns = df.columns.str.strip().str.lower()
 
-    # ✅ Гарантуємо, що колонка "date" — це datetime
+    #Гарантуємо, що колонка "date" — це datetime
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
-    # 🧹 Очищення NaT, порожніх та дублікатів
+    #Очищення NaT, порожніх та дублікатів
     df = df.dropna(subset=["date", "sales", "category"])
     df = df.drop_duplicates(subset=["date", "category"], keep="last")
     df = df.sort_values("date")
 
-    # 🧾 Перевірка останньої дати з CSV
+    #Перевірка останньої дати з CSV
     last_actual_date = df["date"].max()
 
-    # 🔁 Прогноз для кожної категорії окремо
+    #Прогноз для кожної категорії окремо
     for category in df["category"].unique():
 
         cat_df = df[df["category"] == category].copy()
         cat_df.rename(columns={"date": "ds", "sales": "y"}, inplace=True)
 
-        # 🔐 Захист від порожнього DataFrame після фільтрації
+        #Захист від порожнього DataFrame після фільтрації
         if cat_df.empty:
-            print("⚠️ Warning: Empty dataframe for category:", category)
+            print("Warning: Empty dataframe for category:", category)
             continue
 
         model = Prophet()

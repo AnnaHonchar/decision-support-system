@@ -118,7 +118,7 @@ def analyze():
         r2 = result["r2_score"]
         mae = result["mae"]
 
-        # Формування рекомендації на основі RMSE
+        #Формування рекомендації на основі RMSE
         if rmse <= 10:
             recommendation_text = "Прогноз досить точний. Можна використовувати для прийняття рішень."
         elif rmse <= 25:
@@ -359,7 +359,6 @@ def export_prediction(dataset_id):
         if export_format == "excel":
             return jsonify({"error": "Формат Excel недоступний для TOPSIS"}), 400
 
-        # TOPSIS — лише PDF з текстом result_text
         pdf = FPDF()
         font_path = os.path.join("fonts", "DejaVuSans.ttf")
         pdf.add_font("DejaVu", "", font_path, uni=True)
@@ -538,30 +537,30 @@ def real_forecast(dataset_id):
     filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], dataset.filename)
 
     try:
-        # 🧹 Очистити старі прогнози
+        #Очистити старі прогнози
         SalesPrediction.query.filter_by(dataset_id=dataset_id).delete()
         SalesRecommendation.query.filter_by(dataset_id=dataset_id).delete()
         db.session.commit()
 
-        # 📥 Завантажити CSV
+        #Завантажити CSV
         df = pd.read_csv(filepath)
 
-        # ✅ Перевірка на потрібні колонки (всю решту — всередині generate_forecast)
+        #Перевірка на потрібні колонки
         df.columns = df.columns.str.strip().str.lower()
         required = {"date", "category", "sales"}
         if not required.issubset(df.columns):
             return jsonify({"error": f"Файл повинен містити колонки: {required}"}), 400
 
-        # 🔮 Генерація прогнозу
+        #Генерація прогнозу
         forecast_list = generate_forecast(df)
 
-        # 📊 Групування для рекомендацій
+        #Групування для рекомендацій
         category_summary = {}
         for item in forecast_list:
             cat = item["category"]
             category_summary.setdefault(cat, []).append(item["predicted_sales"])
 
-        # 💾 Зберегти прогноз
+        #Зберегти прогноз
         for item in forecast_list:
             db.session.add(SalesPrediction(
                 dataset_id=dataset_id,
@@ -570,7 +569,7 @@ def real_forecast(dataset_id):
                 category=item["category"]
             ))
 
-        # 💬 Зберегти рекомендації
+        #Зберегти рекомендації
         for category, values in category_summary.items():
             avg = sum(values) / len(values)
             if avg >= 13:
@@ -593,11 +592,8 @@ def real_forecast(dataset_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
-    
 @api.route("/forecast_results/<int:dataset_id>", methods=["GET"])
-def get_forecast_results(dataset_id):  # <--- інша назва
+def get_forecast_results(dataset_id):
     predictions = SalesPrediction.query.filter_by(dataset_id=dataset_id).all()
     recs = SalesRecommendation.query.filter_by(dataset_id=dataset_id).all()
     rec_map = {r.category: r.recommendation for r in recs}
@@ -642,8 +638,6 @@ def combined_forecast(dataset_id):
         # Дата
         df["date"] = pd.to_datetime(df["date"])
 
-
-
         # Фактичні дані
         actual_data = {}
         for cat in df["category"].unique():
@@ -654,7 +648,7 @@ def combined_forecast(dataset_id):
             ]
 
         # Прогноз
-        forecast_data = generate_forecast(df)  # [{date, category, predicted_sales}...]
+        forecast_data = generate_forecast(df)
 
         forecast_grouped = {}
         for item in forecast_data:

@@ -31,7 +31,6 @@ def preprocess_data(filepath):
 def train_and_predict(filepath):
     df = preprocess_data(filepath)
 
-    # Припустимо, останній стовпець — цільова змінна
     X = df.iloc[:, :-1]
     y = df.iloc[:, -1]
 
